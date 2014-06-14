@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.imixs.eclipse.manik_feature"
+      label="Manik Hot Deployment"
+      version="1.0.3.v201208170705">
+
+   <description url="https://code.google.com/p/manik-hot-deploy/">
+      This Eclipse Plugin allows hot deployment of Java EE maven archetypes
+into an application server.
+   </description>
+
+   <copyright>
+      Copyright (C) 2010 Ralph Soika
+   </copyright>
+
+   <license url="http://www.example.com/license">
+      Manik Hot Deploy
+Copyright (C) 2010 Ralph Soika  
+http://www.imixs.com
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License 
+as published by the Free Software Foundation; either version
+2 
+of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU 
+General Public License for more details.
+You can receive a copy of the GNU General Public
+License at http://www.gnu.org/licenses/gpl.html
+Contributors:  
+Ralph Soika, Alexander
+   </license>
+
+   <requires>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui.console"/>
+   </requires>
+
+   <plugin
+         id="org.imixs.eclipse.manik"
+         download-size="0"
+         install-size="0"
+         version="1.0.3.v201208170705"
+         unpack="false"/>
+
+</feature>
