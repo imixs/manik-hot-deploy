@@ -50,8 +50,8 @@ import org.eclipse.ui.dialogs.PropertyPage;
  */
 public class TargetPropertyPage extends PropertyPage {
 
-	private static final String AUTODEPLOY_TITLE = "Autodeploy Folder:";
-	private static final String HOTDEPLOY_TITLE = "Hotdeploy Folder:";
+	private static final String AUTODEPLOY_TITLE = "Autodeploy Folder xx:";
+	private static final String HOTDEPLOY_TITLE = "Hotdeploy Folder yy:";
 	public static final String AUTODEPLOY_DIR_PROPERTY = "AUTODEPLOY_TARGET";
 	public static final String HOTDEPLOY_DIR_PROPERTY = "HOTDEPLOY_TARGET";
 	private static final String DEFAULT_DIR = "";
