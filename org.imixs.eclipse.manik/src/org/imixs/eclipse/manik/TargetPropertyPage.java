@@ -50,16 +50,18 @@ import org.eclipse.ui.dialogs.PropertyPage;
  */
 public class TargetPropertyPage extends PropertyPage {
 
-	private static final String AUTODEPLOY_TITLE = "Autodeploy Folder xx:";
-	private static final String HOTDEPLOY_TITLE = "Hotdeploy Folder yy:";
+	private static final String AUTODEPLOY_TITLE = "Autodeploy Folder:";
+	private static final String HOTDEPLOY_TITLE = "Hotdeploy Folder:";
 	public static final String AUTODEPLOY_DIR_PROPERTY = "AUTODEPLOY_TARGET";
 	public static final String HOTDEPLOY_DIR_PROPERTY = "HOTDEPLOY_TARGET";
+	public static final String EXTRACT_ARTIFACTS_PROPERTY = "EXTRACT_ARTIFACTS";
 	private static final String DEFAULT_DIR = "";
 
 	private static final int TEXT_FIELD_WIDTH = 50;
 
 	private Text hotdeployText;
 	private Text autodeployText;
+	private Button checkExplodeArtifacts;
 
 	public TargetPropertyPage() {
 		super();
@@ -71,18 +73,26 @@ public class TargetPropertyPage extends PropertyPage {
 	}
 
 	private void addTargetSection(Composite parent) {
-		Composite composite = createDefaultComposite(parent);
 
+		
 	
+		
+		
+		
+	
+		//	Composite composite = createDefaultComposite(parent,2);
+
 		/*
 		 * ###############################
 		 * 
 		 * Autodeploy Field
 		 */
-		Label ownerLabel = new Label(composite, SWT.NONE);
-		ownerLabel.setText(AUTODEPLOY_TITLE);
+	//	Label ownerLabel = new Label(composite, SWT.NONE);
+	//	ownerLabel.setText(AUTODEPLOY_TITLE);
 
-		Group groupSelectAutoDeploy = new Group(composite, SWT.NONE);
+		Group groupSelectAutoDeploy = new Group(parent, SWT.NONE);
+		
+		groupSelectAutoDeploy.setText(AUTODEPLOY_TITLE);
 
 		groupSelectAutoDeploy.setLayout(new GridLayout(2, false));
 		autodeployText = new Text(groupSelectAutoDeploy, SWT.SINGLE | SWT.BORDER);
@@ -137,10 +147,11 @@ public class TargetPropertyPage extends PropertyPage {
 		 * 
 		 * Hotdeploy Field
 		 */
-		ownerLabel = new Label(composite, SWT.NONE);
-		ownerLabel.setText(HOTDEPLOY_TITLE);
+		//ownerLabel = new Label(composite, SWT.NONE);
+		//ownerLabel.setText(HOTDEPLOY_TITLE);
 
-		Group groupSelectHotDeploy = new Group(composite, SWT.NONE);
+		Group groupSelectHotDeploy = new Group(parent, SWT.NONE);
+		groupSelectHotDeploy.setText(HOTDEPLOY_TITLE);
 
 		groupSelectHotDeploy.setLayout(new GridLayout(2, false));
 		hotdeployText = new Text(groupSelectHotDeploy, SWT.SINGLE | SWT.BORDER);
@@ -192,6 +203,37 @@ public class TargetPropertyPage extends PropertyPage {
 	
 
 		
+		
+		
+		
+		
+		// WildFily Support
+		
+		
+		//check box
+		checkExplodeArtifacts = new Button(parent, SWT.CHECK);
+		
+		checkExplodeArtifacts.setSelection(true);
+		checkExplodeArtifacts.setText("Explode Autodeploy Artifacts");
+	
+		
+		// Populate checkExplodeArtifacts selection
+		try {
+			String extract = ((IResource) getElement())
+					.getPersistentProperty(new QualifiedName("",
+							EXTRACT_ARTIFACTS_PROPERTY));
+			
+			if (extract!=null && "true".equals(extract))
+				checkExplodeArtifacts.setSelection(true);
+			else
+				checkExplodeArtifacts.setSelection(false);
+		} catch (CoreException e) {
+			checkExplodeArtifacts.setSelection(false);
+		}
+
+		
+	
+		
 	}
 
 	/**
@@ -209,10 +251,10 @@ public class TargetPropertyPage extends PropertyPage {
 		return composite;
 	}
 
-	private Composite createDefaultComposite(Composite parent) {
+	private Composite createDefaultComposite(Composite parent,int columns) {
 		Composite composite = new Composite(parent, SWT.NULL);
 		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
+		layout.numColumns = columns;
 		composite.setLayout(layout);
 
 		GridData data = new GridData();
@@ -227,7 +269,7 @@ public class TargetPropertyPage extends PropertyPage {
 		// Populate the owner text field with the default value
 		autodeployText.setText(DEFAULT_DIR);
 		hotdeployText.setText(DEFAULT_DIR);
-	
+		checkExplodeArtifacts.setSelection(false);
 	}
 
 	public boolean performOk() {
@@ -238,15 +280,19 @@ public class TargetPropertyPage extends PropertyPage {
 			((IResource) getElement()).setPersistentProperty(new QualifiedName(
 					"", AUTODEPLOY_DIR_PROPERTY), target.trim());
 
-
-			
 			target = hotdeployText.getText();
-			
 			((IResource) getElement()).setPersistentProperty(new QualifiedName(
 					"", HOTDEPLOY_DIR_PROPERTY), target.trim());
-
 			
-		
+			// extractartefacts.
+			if (checkExplodeArtifacts.getSelection()==true) {
+				((IResource) getElement()).setPersistentProperty(new QualifiedName(
+						"", EXTRACT_ARTIFACTS_PROPERTY),"true");
+			} else {
+				((IResource) getElement()).setPersistentProperty(new QualifiedName(
+						"", EXTRACT_ARTIFACTS_PROPERTY),"false");
+
+			}
 
 		} catch (CoreException e) {
 			return false;
