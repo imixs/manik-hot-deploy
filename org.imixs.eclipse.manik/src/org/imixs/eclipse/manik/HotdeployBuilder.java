@@ -44,7 +44,7 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 
 /**
- * The Builder Class for hot deployment resource files
+ * The Builder Class for hot-deployment resource files
  * 
  * @author rsoika,Alexander
  * 
@@ -53,16 +53,18 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 	public static final String BUILDER_ID = "org.imixs.eclipse.manik.hotdeployBuilder";
 
-	private String[] skipFolderList = { "/src/main/resources/",
-			"/src/main/java/", "/src/test/resources/", "/src/test/java/" };
 
-	private String[] skipSourcePathList = { "/classes/", "/src/main/webapp/" };
+	private static String[] IGNORE_DIRECTORIES = { "/src/main/resources/",
+			"/src/main/java/", "/src/test/resources/", "/src/test/java/" };
+	private static String[] IGNORE_SUBDIRECTORIES = { "/classes/",
+			"/src/main/webapp/" };
 
 	private String hotdeployTarget = "";
 	private String autodeployTarget = "";
 	private String sourceFilePath = "";
 	private String sourceFileName = "";
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
 			throws CoreException {
@@ -88,30 +90,36 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	}
 
 	/**
-	 * copies the resource into the target server. The method distinguishes
-	 * between two modes: In the case the the file resource ends in .ear or .war
-	 * the file will be copied into the autodeploy folder. In all other cases
-	 * the method tries to perform a hotdeployment into the hotdeployment
-	 * folder. The method termnates if not deployment folder is defined.
+	 * This is the main method of the HotdeployBuilder to copy the resource into
+	 * the target server.
 	 * 
-	 * In case of a hotdeployment the target of the file to be copied is
+	 * The method distinguishes between two modes: In the case that the file
+	 * resource ends in .ear or .war the file will be copied into the autodeploy
+	 * folder. In all other cases the method tries to perform a hot-deployment
+	 * into the hot-deployment folder. The method terminates if no deployment
+	 * folder is defined.
+	 * 
+	 * In case of a hot-deployment the target of the file to be copied is
 	 * computed by the helper method computeTarget()
 	 * 
-	 * The method did not compute any copy of a directory ressource.
+	 * The method did not compute any copy of a directory resource.
 	 * 
 	 * If .ear or .war file is autodeployed the method checks the maven /target
-	 * folder pattern. In this case only root artefacts will be deployed!
+	 * folder pattern. In this case only root artifacts will be deployed!
 	 * 
 	 * @param resource
 	 *            The SourceFile
 	 * 
-	 * @param bremove
-	 *            indicates if the Sourcefile should be removed or added
+	 * @param iResourceDelta
+	 *            indicates what happened to the resource
+	 *            (IResourceDelta.ADDED,IResourceDelta
+	 *            .REMOVED,IResourceDelta.CHANGED)
+	 * 
 	 * 
 	 * @throws CoreException
 	 * @throws IOException
 	 */
-	void deployResource(IResource resource, boolean bremove, String action)
+	void deployResource(IResource resource, int iResourceDelta)
 			throws CoreException {
 
 		String targetFilePath = null;
@@ -128,8 +136,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		sourceFileName = file.getName();
 		sourceFilePath = file.getFullPath().toString();
 
+		// we do not deploy files from the source directories
 		// skip source files like /src/main/java/*
-		for (String value : skipFolderList) {
+		for (String value : IGNORE_DIRECTORIES) {
 			if (sourceFilePath.contains(value)) {
 				// console.println("Skipping resource: " + sourceFilePath
 				// + " because it contains: " + value);
@@ -158,10 +167,10 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 			return;
 		}
 
-		// check if a .ear or .war file should be autodeplyoed....
+		// check if a .ear or .war file should be autodeplyed....
 		if ((sourceFileName.endsWith(".ear") || sourceFileName.endsWith(".war"))) {
 			// verify if target autodeploy folder exists!
-			if (autodeployTarget == null)
+			if (autodeployTarget == null || autodeployTarget.isEmpty())
 				return; // no op..
 
 			if (!autodeployTarget.endsWith("/"))
@@ -179,7 +188,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 				// in this case only root artefacts will be copied. No .war
 				// files included in a /target sub folder!
 				if (sourceFilePath.indexOf('/',
-						sourceFilePath.indexOf("/target/")+8) > -1)
+						sourceFilePath.indexOf("/target/") + 8) > -1)
 					return; // no op!
 
 			}
@@ -209,9 +218,10 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		OutputStream out = null;
 		InputStream is = null;
 		try {
-			if (bremove) {
+			if (iResourceDelta == IResourceDelta.REMOVED) {
 				// remove file
 				File f = new File(targetFilePath);
+
 				f.delete();
 				console.println("[DELETE]: " + targetFilePath);
 			} else {
@@ -253,7 +263,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	}
 
 	/**
-	 * This method dose the magic of the manik hot deployer. The method computes
+	 * This method did the magic of the manik-hot-deployer. The method computes
 	 * the target goal inside an application target. There are three different
 	 * cases:
 	 * 
@@ -272,10 +282,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	 * 
 	 * 
 	 * case-3): the target is no web application. So we can copy the source into
-	 * the target root stripp any /target/main/src präfixes
-	 * 
-	 * 
-	 * 
+	 * the target root strip any /target/main/src prefixes
 	 * 
 	 * 
 	 * @param resource
@@ -292,7 +299,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		/* case-2 case a and b included */
 		// test if the sourcefile contains a source path which needs to be
 		// removed ?
-		for (String value : skipSourcePathList) {
+		for (String value : IGNORE_SUBDIRECTORIES) {
 			if (sourceFilePath.contains(value)) {
 
 				String path = sourceFilePath.substring(sourceFilePath
@@ -358,20 +365,10 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		 */
 		public boolean visit(IResourceDelta delta) throws CoreException {
 			IResource resource = delta.getResource();
-			switch (delta.getKind()) {
-			case IResourceDelta.ADDED:
-				// handle added resource
-				deployResource(resource, false, "ADDED");
-				break;
-			case IResourceDelta.REMOVED:
-				// handle removed resource
-				deployResource(resource, true, "REMOVED");
-				break;
-			case IResourceDelta.CHANGED:
-				// handle changed resource
-				deployResource(resource, false, "CHANGED");
-				break;
-			}
+			
+			// tell the method if the resource should be added removed ore changed
+			deployResource(resource, delta.getKind());
+			
 			// return true to continue visiting children.
 			return true;
 		}
