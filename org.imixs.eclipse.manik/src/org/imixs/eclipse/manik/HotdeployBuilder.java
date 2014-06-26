@@ -23,6 +23,7 @@
 package org.imixs.eclipse.manik;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,16 +54,19 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 	public static final String BUILDER_ID = "org.imixs.eclipse.manik.hotdeployBuilder";
 
-
 	private static String[] IGNORE_DIRECTORIES = { "/src/main/resources/",
-			"/src/main/java/", "/src/test/resources/", "/src/test/java/" };
+			"/src/main/java/", "/src/test/resources/", "/src/test/java/",
+			"/target/m2e-wtp/", "/target/maven-archiver/", "/META-INF/","/target/application.xml" };
 	private static String[] IGNORE_SUBDIRECTORIES = { "/classes/",
 			"/src/main/webapp/" };
 
 	private String hotdeployTarget = "";
 	private String autodeployTarget = "";
+	private boolean explodeArtifact = false;
+	private boolean wildflySupport = false;
 	private String sourceFilePath = "";
 	private String sourceFileName = "";
+	private String sourceFilePathAbsolute = "";
 
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -71,7 +75,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		Console console = new Console();
 
 		if (kind == FULL_BUILD) {
-			console.println("FULL_BUILD not supported");
+			// console.println("FULL_BUILD not supported");
 		} else {
 			IResourceDelta delta = getDelta(getProject());
 			if (delta == null) {
@@ -135,6 +139,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		// console.println(action + " " + file.getFullPath());
 		sourceFileName = file.getName();
 		sourceFilePath = file.getFullPath().toString();
+		sourceFilePathAbsolute = file.getRawLocation().toString();
 
 		// we do not deploy files from the source directories
 		// skip source files like /src/main/java/*
@@ -156,6 +161,22 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 						new QualifiedName("",
 								TargetPropertyPage.HOTDEPLOY_DIR_PROPERTY));
 
+		String sTestBoolean = this.getProject()
+				.getPersistentProperty(
+						new QualifiedName("",
+								TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY));
+		explodeArtifact = ("true".equals(sTestBoolean));
+		
+		
+		
+		sTestBoolean = this.getProject()
+				.getPersistentProperty(
+						new QualifiedName("",
+								TargetPropertyPage.WILDFLY_SUPPORT_PROPERTY));
+		wildflySupport= ("true".equals(sTestBoolean));
+
+		
+		
 		if ("".equals(hotdeployTarget))
 			hotdeployTarget = null;
 		if ("".equals(autodeployTarget))
@@ -163,7 +184,8 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 		// check for an missing/invalid confiugration
 		if (autodeployTarget == null && hotdeployTarget == null) {
-			console.println("[ERROR]: Missing configuration. Please check your manik deployment properties for this project.");
+			// no message is needed here!
+			// console.println("[ERROR]: Missing configuration. Please check your manik deployment properties for this project.");
 			return;
 		}
 
@@ -185,7 +207,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 			// verify if sourceFileName includes a maven /target folder pattern
 			if (sourceFilePath.indexOf("/target/") > -1) {
-				// in this case only root artefacts will be copied. No .war
+				// in this case only root artifacts will be copied. No .war
 				// files included in a /target sub folder!
 				if (sourceFilePath.indexOf('/',
 						sourceFilePath.indexOf("/target/") + 8) > -1)
@@ -214,35 +236,92 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		if (targetFilePath == null)
 			return;
 
+		if (iResourceDelta == IResourceDelta.REMOVED) {
+			// remove file
+			File f = new File(targetFilePath);
+
+			f.delete();
+			console.println("[DELETE]: " + targetFilePath);
+		} else {
+
+			// check if a .ear or .war file should be autodeplyed in exploded
+			// format!...
+			if (explodeArtifact
+					&& (sourceFileName.endsWith(".ear") || sourceFileName
+							.endsWith(".war"))) {
+
+				long lStart = System.currentTimeMillis();
+				// find extension
+				int i = sourceFilePathAbsolute.lastIndexOf(".");
+				String sDirPath = sourceFilePathAbsolute.substring(0, i) + "/";
+				try {
+					File srcFolder = new File(sDirPath);
+					File destFolder = new File(targetFilePath);
+
+					copyFolder(srcFolder, destFolder);
+				} catch (IOException e) {
+					e.printStackTrace();
+					// error, just exit
+					System.exit(0);
+				}
+				long lTime = System.currentTimeMillis() - lStart;
+				console.println("[AUTODEPLOY]: " + sourceFilePath + " in "
+						+ lTime + "ms");
+
+			} else {
+				// easy mode to deploy
+				long lStart = System.currentTimeMillis();
+
+				copySingelResource(file, targetFilePath, console);
+
+				if (console != null) {
+
+					long lTime = System.currentTimeMillis() - lStart;
+
+					// log message..
+					if (sourceFileName.endsWith(".ear")
+							|| sourceFileName.endsWith(".war"))
+						console.println("[AUTODEPLOY]: " + sourceFilePath
+								+ " in " + lTime + "ms");
+					else
+						console.println("[HOTDEPLOY]: " + sourceFilePath
+								+ " in " + lTime + "ms");
+
+				}
+			}
+
+		}
+
+	}
+
+	/**
+	 * This method copies a file resource into the targetPath
+	 * 
+	 * 
+	 * @param file
+	 *            Source File
+	 * @param targetFilePath
+	 *            target Path
+	 * @param console
+	 * @throws CoreException
+	 */
+	private void copySingelResource(IFile file, String targetFilePath,
+			Console console) throws CoreException {
+
 		// now copy / delete the file....
 		OutputStream out = null;
 		InputStream is = null;
 		try {
-			if (iResourceDelta == IResourceDelta.REMOVED) {
-				// remove file
-				File f = new File(targetFilePath);
-
-				f.delete();
-				console.println("[DELETE]: " + targetFilePath);
-			} else {
-				// Copy the file....
-				is = file.getContents();
-				File fOutput = new File(targetFilePath);
-				out = new FileOutputStream(fOutput);
-				byte buf[] = new byte[1024];
-				int len;
-				while ((len = is.read(buf)) > 0) {
-					out.write(buf, 0, len);
-				}
-
-				// log message..
-				if (sourceFileName.endsWith(".ear")
-						|| sourceFileName.endsWith(".war"))
-					console.println("[AUTODEPLOY]: " + sourceFilePath);
-				else
-					console.println("[HOTDEPLOY]: " + sourceFilePath);
-
+			// Copy the file....
+			is = file.getContents();
+			File fOutput = new File(targetFilePath);
+			out = new FileOutputStream(fOutput);
+			byte buf[] = new byte[1024];
+			int len;
+			while ((len = is.read(buf)) > 0) {
+				out.write(buf, 0, len);
 			}
+
 		} catch (IOException ex) {
 			// unable to copy file
 			// console.println("[ERROR]: "+ex.getMessage());
@@ -255,11 +334,66 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 					is.close();
 				}
 			} catch (IOException e) {
-				console.println("[ERROR]: closing stream: " + e.getMessage());
+				if (console != null)
+					console.println("[ERROR]: closing stream: "
+							+ e.getMessage());
 			}
 
 		}
 
+	}
+
+	/**
+	 * Copies a folder.
+	 * 
+	 * Thanks to mkyong
+	 * 
+	 * http://www.mkyong.com/java/how-to-copy-directory-in-java/
+	 * 
+	 * @param src
+	 * @param dest
+	 * @throws IOException
+	 */
+	private static void copyFolder(File src, File dest) throws IOException {
+
+		if (src.isDirectory()) {
+
+			// if directory not exists, create it
+			if (!dest.exists()) {
+				dest.mkdir();
+				System.out.println("Directory copied from " + src + "  to "
+						+ dest);
+			}
+
+			// list all the directory contents
+			String files[] = src.list();
+
+			for (String file : files) {
+				// construct the src and dest file structure
+				File srcFile = new File(src, file);
+				File destFile = new File(dest, file);
+				// recursive copy
+				copyFolder(srcFile, destFile);
+			}
+
+		} else {
+			// if file, then copy it
+			// Use bytes stream to support all file types
+			InputStream in = new FileInputStream(src);
+			OutputStream out = new FileOutputStream(dest);
+
+			byte[] buffer = new byte[1024];
+
+			int length;
+			// copy the file content in bytes
+			while ((length = in.read(buffer)) > 0) {
+				out.write(buffer, 0, length);
+			}
+
+			in.close();
+			out.close();
+			System.out.println("File copied from " + src + " to " + dest);
+		}
 	}
 
 	/**
@@ -365,10 +499,11 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		 */
 		public boolean visit(IResourceDelta delta) throws CoreException {
 			IResource resource = delta.getResource();
-			
-			// tell the method if the resource should be added removed ore changed
+
+			// tell the method if the resource should be added removed ore
+			// changed
 			deployResource(resource, delta.getKind());
-			
+
 			// return true to continue visiting children.
 			return true;
 		}
