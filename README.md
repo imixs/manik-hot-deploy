@@ -28,15 +28,8 @@ deployment).
 ###Autodeployment
 
 Autodeployment means that you simply copy a web- (.war) or enterprise application (.ear) 
-into a specific directory of our application server. For Glassfish this is the folder:
-
-..[GLASSFISH_INSTALL]/glassfish/domains/domain1/autodeploy/
-
-for WildFly Server this is the folder:
-
-..[WILDFLY_INSTALL]/standalone/deployments/
-
-When you copy an application artifact (.ear or .war) into that directory your server will automatically detect the 
+into a specific directory of our application server. When you copy an application artifact 
+into that directory the application server will automatically detect the 
 new artefact and starts a deployment process. If the application was already deployed before 
 a redeployment will be started.
 
