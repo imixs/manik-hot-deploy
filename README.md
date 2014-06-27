@@ -44,5 +44,5 @@ and running application. So there is no need to build and redeploy the applicati
 
 
 #How to use
-[See the Wiki Page for the howto installation guide](https://github.com/rsoika/manik-hot-deploy/wiki)
+[See the Wiki Page for more information](https://github.com/rsoika/manik-hot-deploy/wiki)
 
