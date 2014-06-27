@@ -24,6 +24,7 @@ package org.imixs.eclipse.manik;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,12 +57,14 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 	private static String[] IGNORE_DIRECTORIES = { "/src/main/resources/",
 			"/src/main/java/", "/src/test/resources/", "/src/test/java/",
-			"/target/m2e-wtp/", "/target/maven-archiver/", "/META-INF/","/target/application.xml" };
+			"/target/m2e-wtp/", "/target/maven-archiver/", "/META-INF/",
+			"/target/application.xml","/target/test-classes/","/target/classes/","/WEB-INF/classes/" };
 	private static String[] IGNORE_SUBDIRECTORIES = { "/classes/",
 			"/src/main/webapp/" };
 
 	private String hotdeployTarget = "";
 	private String autodeployTarget = "";
+	private boolean hotDeployMode = true;
 	private boolean explodeArtifact = false;
 	private boolean wildflySupport = false;
 	private String sourceFilePath = "";
@@ -121,6 +124,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	 * 
 	 * 
 	 * @throws CoreException
+	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
 	void deployResource(IResource resource, int iResourceDelta)
@@ -161,22 +165,16 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 						new QualifiedName("",
 								TargetPropertyPage.HOTDEPLOY_DIR_PROPERTY));
 
-		String sTestBoolean = this.getProject()
-				.getPersistentProperty(
-						new QualifiedName("",
-								TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY));
+		String sTestBoolean = this.getProject().getPersistentProperty(
+				new QualifiedName("",
+						TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY));
 		explodeArtifact = ("true".equals(sTestBoolean));
-		
-		
-		
-		sTestBoolean = this.getProject()
-				.getPersistentProperty(
-						new QualifiedName("",
-								TargetPropertyPage.WILDFLY_SUPPORT_PROPERTY));
-		wildflySupport= ("true".equals(sTestBoolean));
 
-		
-		
+		sTestBoolean = this.getProject().getPersistentProperty(
+				new QualifiedName("",
+						TargetPropertyPage.WILDFLY_SUPPORT_PROPERTY));
+		wildflySupport = ("true".equals(sTestBoolean));
+
 		if ("".equals(hotdeployTarget))
 			hotdeployTarget = null;
 		if ("".equals(autodeployTarget))
@@ -217,6 +215,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 			targetFilePath = autodeployTarget + sourceFileName;
 
+			// disable hotdeploy mode!
+			hotDeployMode = false;
+
 		} else {
 			// Hotdepoyment mode!
 			if (hotdeployTarget == null)
@@ -230,6 +231,8 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 			// compute the target path....
 			targetFilePath = computeTarget();
 
+			// enable hotdeploy mode!
+			hotDeployMode = true;
 		}
 
 		// if the target file was not computed return....
@@ -242,15 +245,38 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 			f.delete();
 			console.println("[DELETE]: " + targetFilePath);
-		} else {
 
+			return;
+		}
+
+		// check if Autodeploy or Hotdeploy
+		if (hotDeployMode) {
+			// HOTDEPLOY MODE
+
+			long lStart = System.currentTimeMillis();
+			copySingelResource(file, targetFilePath, console);
+			if (console != null) {
+				long lTime = System.currentTimeMillis() - lStart;
+				// log message..
+				if (sourceFileName.endsWith(".ear")
+						|| sourceFileName.endsWith(".war"))
+					console.println("[AUTODEPLOY]: " + sourceFilePath + " in "
+							+ lTime + "ms");
+				else
+					console.println("[HOTDEPLOY]: " + sourceFilePath + " in "
+							+ lTime + "ms");
+
+			}
+		} else {
+			// AUTODEPLOY MODE
+
+			long lStart = System.currentTimeMillis();
 			// check if a .ear or .war file should be autodeplyed in exploded
 			// format!...
-			if (explodeArtifact
-					&& (sourceFileName.endsWith(".ear") || sourceFileName
-							.endsWith(".war"))) {
+			if (!explodeArtifact) {
+				copySingelResource(file, targetFilePath, console);
+			} else {
 
-				long lStart = System.currentTimeMillis();
 				// find extension
 				int i = sourceFilePathAbsolute.lastIndexOf(".");
 				String sDirPath = sourceFilePathAbsolute.substring(0, i) + "/";
@@ -264,32 +290,28 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 					// error, just exit
 					System.exit(0);
 				}
-				long lTime = System.currentTimeMillis() - lStart;
-				console.println("[AUTODEPLOY]: " + sourceFilePath + " in "
-						+ lTime + "ms");
 
-			} else {
-				// easy mode to deploy
-				long lStart = System.currentTimeMillis();
+			}
 
-				copySingelResource(file, targetFilePath, console);
+			// if wildfly support then tough the .deploy file
+			if (wildflySupport) {
+				try {
+					String sDeployFile = targetFilePath + ".dodeploy";
+					File deployFile = new File(sDeployFile);
+					if (!deployFile.exists())
+						new FileOutputStream(deployFile).close();
+					deployFile.setLastModified(System.currentTimeMillis());
 
-				if (console != null) {
-
-					long lTime = System.currentTimeMillis() - lStart;
-
-					// log message..
-					if (sourceFileName.endsWith(".ear")
-							|| sourceFileName.endsWith(".war"))
-						console.println("[AUTODEPLOY]: " + sourceFilePath
-								+ " in " + lTime + "ms");
-					else
-						console.println("[HOTDEPLOY]: " + sourceFilePath
-								+ " in " + lTime + "ms");
-
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 
+			long lTime = System.currentTimeMillis() - lStart;
+			console.println("[AUTODEPLOY]: " + sourceFilePath + " in " + lTime
+					+ "ms");
 		}
 
 	}
