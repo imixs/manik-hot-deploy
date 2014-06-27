@@ -6,5 +6,8 @@
    <feature url="features/org.imixs.eclipse.manik_feature_1.0.3.v201208170705.jar" id="org.imixs.eclipse.manik_feature" version="1.0.3.v201208170705">
       <category name="manik"/>
    </feature>
+   <feature url="features/org.imixs.eclipse.manik_feature_1.0.4.201406271824.jar" id="org.imixs.eclipse.manik_feature" version="1.0.4.201406271824">
+      <category name="manik"/>
+   </feature>
    <category-def name="manik" label="Manik Hot Deployment"/>
 </site>
