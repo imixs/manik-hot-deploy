@@ -42,7 +42,7 @@ Ralph Soika, Alexander
 
    <plugin
          id="org.imixs.eclipse.manik"
-         download-size="0"
+         download-size="1"
          install-size="0"
          version="1.0.4.qualifier"
          unpack="false"/>

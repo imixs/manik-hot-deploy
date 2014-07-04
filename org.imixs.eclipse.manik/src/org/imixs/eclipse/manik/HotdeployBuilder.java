@@ -286,9 +286,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 					copyFolder(srcFolder, destFolder);
 				} catch (IOException e) {
-					e.printStackTrace();
-					// error, just exit
-					System.exit(0);
+					console.println("[AUTODEPLOY]: error - " + e.getMessage());
 				}
 
 			}
@@ -303,9 +301,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 					deployFile.setLastModified(System.currentTimeMillis());
 
 				} catch (FileNotFoundException e) {
-					e.printStackTrace();
+					console.println("[AUTODEPLOY]: error - " + e.getMessage());
 				} catch (IOException e) {
-					e.printStackTrace();
+					console.println("[AUTODEPLOY]: error - " + e.getMessage());
 				}
 			}
 
@@ -379,12 +377,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	private static void copyFolder(File src, File dest) throws IOException {
 
 		if (src.isDirectory()) {
-
 			// if directory not exists, create it
 			if (!dest.exists()) {
 				dest.mkdir();
-				System.out.println("Directory copied from " + src + "  to "
-						+ dest);
 			}
 
 			// list all the directory contents
@@ -414,7 +409,6 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 			in.close();
 			out.close();
-			System.out.println("File copied from " + src + " to " + dest);
 		}
 	}
 
