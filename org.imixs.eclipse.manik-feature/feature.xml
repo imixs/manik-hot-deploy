@@ -2,7 +2,7 @@
 <feature
       id="org.imixs.eclipse.manik_feature"
       label="Manik Hot Deployment"
-      version="1.0.4.qualifier">
+      version="1.0.5.qualifier">
 
    <description url="https://code.google.com/p/manik-hot-deploy/">
       This Eclipse Plugin allows hot deployment of Java EE maven archetypes
@@ -44,7 +44,7 @@ Ralph Soika, Alexander
          id="org.imixs.eclipse.manik"
          download-size="1"
          install-size="0"
-         version="1.0.4.qualifier"
+         version="1.0.5.qualifier"
          unpack="false"/>
 
 </feature>

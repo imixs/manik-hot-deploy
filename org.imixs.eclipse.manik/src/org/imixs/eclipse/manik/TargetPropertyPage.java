@@ -23,9 +23,10 @@
 
 package org.imixs.eclipse.manik;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.resources.ProjectScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -41,6 +42,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.PropertyPage;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Property Page to store the target folder from the app server
@@ -75,6 +77,8 @@ public class TargetPropertyPage extends PropertyPage {
 	}
 
 	private void addTargetSection(Composite parent) {
+
+		// IProject project = ((IResource) getElement()).getProject();
 
 		/*
 		 * ###############################
@@ -195,52 +199,28 @@ public class TargetPropertyPage extends PropertyPage {
 		});
 
 		// Populate autodeploy text field
-		try {
-			String owner = ((IResource) getElement())
-					.getPersistentProperty(new QualifiedName("",
-							AUTODEPLOY_DIR_PROPERTY));
-			autodeployText.setText((owner != null) ? owner : DEFAULT_DIR);
-		} catch (CoreException e) {
-			autodeployText.setText(DEFAULT_DIR);
-		}
+		String value = getPersistentProperty(AUTODEPLOY_DIR_PROPERTY);
+		autodeployText.setText((value != null) ? value : DEFAULT_DIR);
 
 		// Populate autodeploy text field
-		try {
-			String owner = ((IResource) getElement())
-					.getPersistentProperty(new QualifiedName("",
-							HOTDEPLOY_DIR_PROPERTY));
-			hotdeployText.setText((owner != null) ? owner : DEFAULT_DIR);
-		} catch (CoreException e) {
-			hotdeployText.setText(DEFAULT_DIR);
-		}
+		value = getPersistentProperty(HOTDEPLOY_DIR_PROPERTY);
+		hotdeployText.setText((value != null) ? value : DEFAULT_DIR);
 
 		// Populate checkExplodeArtifacts selection
-		try {
-			String extract = ((IResource) getElement())
-					.getPersistentProperty(new QualifiedName("",
-							EXTRACT_ARTIFACTS_PROPERTY));
+		String extract = getPersistentProperty(EXTRACT_ARTIFACTS_PROPERTY);
 
-			if (extract != null && "true".equals(extract))
-				checkExplodeArtifacts.setSelection(true);
-			else
-				checkExplodeArtifacts.setSelection(false);
-		} catch (CoreException e) {
+		if (extract != null && "true".equals(extract))
+			checkExplodeArtifacts.setSelection(true);
+		else
 			checkExplodeArtifacts.setSelection(false);
-		}
 
 		// Populate checkWildFlySupport selection
-		try {
-			String extract = ((IResource) getElement())
-					.getPersistentProperty(new QualifiedName("",
-							WILDFLY_SUPPORT_PROPERTY));
+		extract = getPersistentProperty(WILDFLY_SUPPORT_PROPERTY);
 
-			if (extract != null && "true".equals(extract))
-				checkWildFlySupport.setSelection(true);
-			else
-				checkWildFlySupport.setSelection(false);
-		} catch (CoreException e) {
+		if (extract != null && "true".equals(extract))
+			checkWildFlySupport.setSelection(true);
+		else
 			checkWildFlySupport.setSelection(false);
-		}
 
 	}
 
@@ -259,6 +239,7 @@ public class TargetPropertyPage extends PropertyPage {
 		return composite;
 	}
 
+	@SuppressWarnings("unused")
 	private Composite createDefaultComposite(Composite parent, int columns) {
 		Composite composite = new Composite(parent, SWT.NULL);
 		GridLayout layout = new GridLayout();
@@ -282,43 +263,66 @@ public class TargetPropertyPage extends PropertyPage {
 	}
 
 	public boolean performOk() {
-		// store the value in the owner text field
-		try {
-			String target = autodeployText.getText();
+		// store the values
 
-			((IResource) getElement()).setPersistentProperty(new QualifiedName(
-					"", AUTODEPLOY_DIR_PROPERTY), target.trim());
+		String target = autodeployText.getText();
 
-			target = hotdeployText.getText();
-			((IResource) getElement()).setPersistentProperty(new QualifiedName(
-					"", HOTDEPLOY_DIR_PROPERTY), target.trim());
+		setPersistentProperty(AUTODEPLOY_DIR_PROPERTY, target.trim());
 
-			// extractartefacts.
-			if (checkExplodeArtifacts.getSelection() == true) {
-				((IResource) getElement()).setPersistentProperty(
-						new QualifiedName("", EXTRACT_ARTIFACTS_PROPERTY),
-						"true");
-			} else {
-				((IResource) getElement()).setPersistentProperty(
-						new QualifiedName("", EXTRACT_ARTIFACTS_PROPERTY),
-						"false");
-			}
+		target = hotdeployText.getText();
+		setPersistentProperty(HOTDEPLOY_DIR_PROPERTY, target.trim());
 
-			// Wildfly support.
-			if (checkWildFlySupport.getSelection() == true) {
-				((IResource) getElement())
-						.setPersistentProperty(new QualifiedName("",
-								WILDFLY_SUPPORT_PROPERTY), "true");
-			} else {
-				((IResource) getElement()).setPersistentProperty(
-						new QualifiedName("", WILDFLY_SUPPORT_PROPERTY),
-						"false");
-			}
-
-		} catch (CoreException e) {
-			return false;
+		// extractartefacts.
+		if (checkExplodeArtifacts.getSelection() == true) {
+			setPersistentProperty(EXTRACT_ARTIFACTS_PROPERTY, "true");
+		} else {
+			setPersistentProperty(EXTRACT_ARTIFACTS_PROPERTY, "false");
 		}
+
+		// Wildfly support.
+		if (checkWildFlySupport.getSelection() == true) {
+			setPersistentProperty(WILDFLY_SUPPORT_PROPERTY, "true");
+		} else {
+			setPersistentProperty(WILDFLY_SUPPORT_PROPERTY, "false");
+		}
+
 		return true;
+	}
+
+	/**
+	 * Stores a value into the project properties
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	private void setPersistentProperty(String key, String value) {
+		IProject project = ((IResource) getElement()).getProject();
+
+		ProjectScope ps = new ProjectScope(project);
+		IEclipsePreferences prefs = ps.getNode("org.imixs.eclipse.manik");
+		prefs.put(key, value);
+		try {
+			prefs.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * Gets a value from the project properties
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	private String getPersistentProperty(String key) {
+		IProject project = ((IResource) getElement()).getProject();
+
+		ProjectScope ps = new ProjectScope(project);
+		IEclipsePreferences prefs = ps.getNode("org.imixs.eclipse.manik");
+		String value = prefs.get(key, null);
+		return value;
+
 	}
 
 }
