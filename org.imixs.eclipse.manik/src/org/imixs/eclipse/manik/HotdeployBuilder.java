@@ -37,9 +37,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -58,7 +59,8 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	private static String[] IGNORE_DIRECTORIES = { "/src/main/resources/",
 			"/src/main/java/", "/src/test/resources/", "/src/test/java/",
 			"/target/m2e-wtp/", "/target/maven-archiver/", "/META-INF/",
-			"/target/application.xml","/target/test-classes/","/target/classes/","/WEB-INF/classes/" };
+			"/target/application.xml", "/target/test-classes/",
+			"/target/classes/", "/WEB-INF/classes/" };
 	private static String[] IGNORE_SUBDIRECTORIES = { "/classes/",
 			"/src/main/webapp/" };
 
@@ -156,23 +158,18 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		}
 
 		// read deployment directory settings....
-		autodeployTarget = this.getProject().getPersistentProperty(
-				new QualifiedName("",
-						TargetPropertyPage.AUTODEPLOY_DIR_PROPERTY));
+		autodeployTarget = getPersistentProperty(this.getProject(),
+				TargetPropertyPage.AUTODEPLOY_DIR_PROPERTY);
 
-		hotdeployTarget = this.getProject()
-				.getPersistentProperty(
-						new QualifiedName("",
-								TargetPropertyPage.HOTDEPLOY_DIR_PROPERTY));
+		hotdeployTarget = getPersistentProperty(this.getProject(),
+				TargetPropertyPage.HOTDEPLOY_DIR_PROPERTY);
 
-		String sTestBoolean = this.getProject().getPersistentProperty(
-				new QualifiedName("",
-						TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY));
+		String sTestBoolean = getPersistentProperty(this.getProject(),
+				TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY);
 		explodeArtifact = ("true".equals(sTestBoolean));
 
-		sTestBoolean = this.getProject().getPersistentProperty(
-				new QualifiedName("",
-						TargetPropertyPage.WILDFLY_SUPPORT_PROPERTY));
+		sTestBoolean = getPersistentProperty(this.getProject(),
+				TargetPropertyPage.WILDFLY_SUPPORT_PROPERTY);
 		wildflySupport = ("true".equals(sTestBoolean));
 
 		if ("".equals(hotdeployTarget))
@@ -523,6 +520,20 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 			// return true to continue visiting children.
 			return true;
 		}
+	}
+
+	/**
+	 * Gets a value from the project properties
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	private String getPersistentProperty(IProject project, String key) {
+		ProjectScope ps = new ProjectScope(project);
+		IEclipsePreferences prefs = ps.getNode("org.imixs.eclipse.manik");
+		String value = prefs.get(key, null);
+		return value;
+
 	}
 
 }
