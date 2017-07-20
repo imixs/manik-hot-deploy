@@ -1,4 +1,4 @@
-#manik-hot-deploy
+# manik-hot-deploy
 
 Maven Incremental hot deploy - a plugin for the Eclipse IDE
 
@@ -19,13 +19,13 @@ and speed-up the development of web and enterprise applications.
 
 
 
-##Autodeployment vs. Hotdeployment (Incremental Deployment)
+## Autodeployment vs. Hotdeployment (Incremental Deployment)
 
 Most application servers like GlassFish or JBoss/WildFly are supporting two different modes of 
 automatic deployment. The autodeployment and the hotdeplyoment (also called incremental 
 deployment).
 
-###Autodeployment
+### Autodeployment
 
 Autodeployment means that you simply copy a web- (.war) or enterprise application (.ear) 
 into a specific directory of our application server. When you copy an application artifact 
@@ -33,7 +33,7 @@ into that directory the application server will automatically detect the
 new artefact and starts a deployment process. If the application was already deployed before 
 a redeployment will be started.
 
-###Hot-Deployment
+### Hot-Deployment
 
 In different to autodeplyoment the hotdeplyoment (or incremental deployment) will not deploy 
 the whole application but parts of your application which are updated or changed during 
@@ -43,6 +43,6 @@ Incremental deployment means, that in the moment when you are changing a web res
 and running application. So there is no need to build and redeploy the application.
 
 
-#How to use
+# How to use
 [See the Wiki Page for more information](https://github.com/rsoika/manik-hot-deploy/wiki)
 
