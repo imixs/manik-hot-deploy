@@ -1,6 +1,6 @@
 # manik-hot-deploy
 
-Maven Incremental hot deploy - a plugin for the Eclipse IDE
+Manik-Hot-Deploy is a plugin for the Eclipse IDE which brings hot-deploy to the development of web applications. It supports Glassfish, JBoss and Wildfly applicaiton servers. 
 
 
 There are different ways how to deploy a Java EE application into an application server 
