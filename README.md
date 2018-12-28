@@ -1,23 +1,12 @@
 # manik-hot-deploy
 
-Manik-Hot-Deploy is a plugin for the Eclipse IDE which brings hot-deploy to the development of web applications. It supports Glassfish, JBoss and Wildfly applicaiton servers. 
+Manik-Hot-Deploy is a plugin for the Eclipse IDE which brings hot-deploy to the development of web applications. It supports Glassfish, Payara, JBoss and Wildfly application servers. 
 
+There are different ways how to deploy a Web Application into an application server. You can deploy your application using a command line tool or a web interface provided by your sever. This is called Cold-Deployment. But this takes time as you need to redeploy your application each time you have done a change. You can automate this by usinge the autodeploy and hot-deploy features supported by most application servers. This means, changes of the artefact or web content will automatically be deployed to your server in the background.
 
-There are different ways how to deploy a Java EE application into an application server 
-like Glassfish or JBoss. You can deploy your application using a command line tool or a 
-web interface provided by your sever. Or you can use the autodeploy feature which means 
-that you simply copy your application into a specific folder of your server.
+If you are using the Eclipse IDE togehter with Maven, Manik-Hot-Deploy allows you to setup hot-deploy for most application servers in a easy way. 
 
-The Eclipse IDE provides a plugin called "Web Tools Plattform" (WTP) which supports the 
-hot deployment functionality for some application and web servers. But if you are using 
-the Maven build tool the Ecipse WTP feature did not integrate smoothly with the maven 
-project structure. So in most cases the hot deployment feature will get lost and the 
-development will become time intensive and frustrating. This is the moment 
-where manik-hot-deploy comes into play. manik-hot-deploy is an Eclipse plugin which supports 
-hotdeployment functionality for your maven java enterprise project. It is easy to configure 
-and speed-up the development of web and enterprise applications.
-
-
+You will find the [installation guide](https://github.com/rsoika/manik-hot-deploy/wiki) on the wiki page.
 
 ## Autodeployment vs. Hotdeployment (Incremental Deployment)
 
