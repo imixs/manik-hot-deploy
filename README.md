@@ -6,7 +6,7 @@ There are different ways how to deploy a Web Application into an application ser
 
 If you are using the Eclipse IDE and Maven, Manik-Hot-Deploy allows you to setup hot-deploy for most application servers in a easy way. 
 
-You will find the [installation guide](https://github.com/rsoika/manik-hot-deploy/wiki) on the wiki page.
+See the [project home](https://manik.imixs.org/) for more information. 
 
 ## Autodeployment vs. Hotdeployment (Incremental Deployment)
 
@@ -28,5 +28,5 @@ Incremental deployment means, that in the moment when you are changing a web res
 
 
 # How to use
-[See the Wiki Page for more information](https://github.com/rsoika/manik-hot-deploy/wiki)
+[See the Projekt Home for more information](https://manik.imixs.org/)
 
