@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -41,10 +43,7 @@ import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.MessageConsole;
+
 
 /**
  * The Builder Class for hot-deployment resource files
@@ -66,6 +65,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 	private String hotdeployTarget = "";
 	private String autodeployTarget = "";
+	private String autodeploySource="";
 	private boolean hotDeployMode = true;
 	private boolean explodeArtifact = false;
 	private boolean wildflySupport = false;
@@ -73,6 +73,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	private String sourceFileName = "";
 	private String sourceFilePathAbsolute = "";
 
+	
+	
+	
 	@SuppressWarnings("rawtypes")
 	@Override
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
@@ -101,18 +104,18 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	/**
 	 * This is the main method of the HotdeployBuilder to copy the resource into
 	 * the target server.
-	 * 
+	 * <p>
 	 * The method distinguishes between two modes: In the case that the file
 	 * resource ends in .ear or .war the file will be copied into the autodeploy
 	 * folder. In all other cases the method tries to perform a hot-deployment
 	 * into the hot-deployment folder. The method terminates if no deployment
 	 * folder is defined.
-	 * 
+	 * <p>
 	 * In case of a hot-deployment the target of the file to be copied is
 	 * computed by the helper method computeTarget()
-	 * 
+	 * <p>
 	 * The method did not compute any copy of a directory resource.
-	 * 
+	 * <o>
 	 * If .ear or .war file is autodeployed the method checks the maven /target
 	 * folder pattern. In this case only root artifacts will be deployed!
 	 * 
@@ -163,6 +166,9 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 		hotdeployTarget = getPersistentProperty(this.getProject(),
 				TargetPropertyPage.HOTDEPLOY_DIR_PROPERTY);
+		
+		autodeploySource = getPersistentProperty(this.getProject(),
+				TargetPropertyPage.AUTODEPLOY_SOURCE_DIR_PROPERTY);
 
 		String sTestBoolean = getPersistentProperty(this.getProject(),
 				TargetPropertyPage.EXTRACT_ARTIFACTS_PROPERTY);
@@ -184,7 +190,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 			return;
 		}
 
-		// check if a .ear or .war file should be autodeplyed....
+		// check if a .ear or .war file should be autodeployed....
 		if ((sourceFileName.endsWith(".ear") || sourceFileName.endsWith(".war"))) {
 			// verify if target autodeploy folder exists!
 			if (autodeployTarget == null || autodeployTarget.isEmpty())
@@ -249,26 +255,36 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 		// check if Autodeploy or Hotdeploy
 		if (hotDeployMode) {
 			// HOTDEPLOY MODE
+			
+			
+			// test if sourceFilePath contains /src/		
+			if (!sourceFilePath.contains("/src")) {
+				// the artifact did not match the source pattern
+				return;
+			}
+				
 
 			long lStart = System.currentTimeMillis();
 			copySingelResource(file, targetFilePath, console);
 			if (console != null) {
 				long lTime = System.currentTimeMillis() - lStart;
-				// log message..
-				if (sourceFileName.endsWith(".ear")
-						|| sourceFileName.endsWith(".war"))
-					console.println("[AUTODEPLOY]: " + sourceFilePath + " in "
+				console.println("[HOTDEPLOY]: " + sourceFilePath + " in "
 							+ lTime + "ms");
-				else
-					console.println("[HOTDEPLOY]: " + sourceFilePath + " in "
-							+ lTime + "ms");
-
 			}
 		} else {
 			// AUTODEPLOY MODE
+			
+			// test if sourceFilePath matches the target regex!			
+			Pattern p = Pattern.compile(autodeploySource);
+			Matcher m = p.matcher(sourceFilePath);
+			if (!m.find()) {
+				// the artifact did not match the source pattern
+				return;
+			}
+				
 
 			long lStart = System.currentTimeMillis();
-			// check if a .ear or .war file should be autodeplyed in exploded
+			// check if a .ear or .war file should be auto deployed in exploded
 			// format!...
 			if (!explodeArtifact) {
 				copySingelResource(file, targetFilePath, console);
@@ -325,6 +341,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 	private void copySingelResource(IFile file, String targetFilePath,
 			Console console) throws CoreException {
 
+		System.out.println("copy file");
 		// now copy / delete the file....
 		OutputStream out = null;
 		InputStream is = null;
@@ -488,19 +505,7 @@ public class HotdeployBuilder extends IncrementalProjectBuilder {
 
 	}
 
-	private MessageConsole findConsole(String name) {
-		ConsolePlugin plugin = ConsolePlugin.getDefault();
-		IConsoleManager conMan = plugin.getConsoleManager();
-		IConsole[] existing = conMan.getConsoles();
-		for (int i = 0; i < existing.length; i++)
-			if (name.equals(existing[i].getName()))
-				return (MessageConsole) existing[i];
-		// no console found, so create a new one
-		MessageConsole myConsole = new MessageConsole(name, null);
-		conMan.addConsoles(new IConsole[] { myConsole });
-		myConsole.activate();
-		return myConsole;
-	}
+	
 
 	class HotdeployDeltaVisitor implements IResourceDeltaVisitor {
 		/*

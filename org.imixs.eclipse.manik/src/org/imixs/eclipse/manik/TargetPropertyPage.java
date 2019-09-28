@@ -55,15 +55,18 @@ public class TargetPropertyPage extends PropertyPage {
 	private static final String AUTODEPLOY_TITLE = "Autodeployment:";
 	private static final String HOTDEPLOY_TITLE = "Hotdeployment:";
 	public static final String AUTODEPLOY_DIR_PROPERTY = "AUTODEPLOY_TARGET";
+	public static final String AUTODEPLOY_SOURCE_DIR_PROPERTY = "AUTODEPLOY_SOURCE";
 	public static final String HOTDEPLOY_DIR_PROPERTY = "HOTDEPLOY_TARGET";
 	public static final String EXTRACT_ARTIFACTS_PROPERTY = "EXTRACT_ARTIFACTS";
 	public static final String WILDFLY_SUPPORT_PROPERTY = "WILDFLY_SUPPORT";
 	private static final String DEFAULT_DIR = "";
+	private static final String DEFAULT_SOURCE = "\\/target\\/";
 
 	private static final int TEXT_FIELD_WIDTH = 50;
 
 	private Text hotdeployText;
 	private Text autodeployText;
+	private Text autodeploySourceText;
 	private Button checkExplodeArtifacts;
 	private Button checkWildFlySupport;
 
@@ -85,22 +88,25 @@ public class TargetPropertyPage extends PropertyPage {
 		 * 
 		 * Autodeploy Field
 		 */
-		Group groupSelectAutoDeploy = new Group(parent, SWT.NONE);
+		Group groupSelectAutoDeploy = new Group(parent, SWT.NONE );
 		groupSelectAutoDeploy.setText(AUTODEPLOY_TITLE);
 		groupSelectAutoDeploy.setLayout(new GridLayout(2, false));
 
+		/* Target Directory */
 		Label helpLabel = new Label(groupSelectAutoDeploy, SWT.NONE);
-		helpLabel
-				.setText("Select the target autodeploy directory of your\napplication server to deploy your application.");
+		helpLabel.setText("Target directory:");
+		new Label(groupSelectAutoDeploy, SWT.NONE).setText(""); // dummy label
+		
+		helpLabel = new Label(groupSelectAutoDeploy, SWT.NONE);
+		helpLabel.setText("(autodeploy directory of your application server)");
+		new Label(groupSelectAutoDeploy, SWT.NONE).setText(""); // dummy label
 
-		// add dummy label
-		new Label(groupSelectAutoDeploy, SWT.NONE).setText("");
 
-		autodeployText = new Text(groupSelectAutoDeploy, SWT.SINGLE
-				| SWT.BORDER);
+		autodeployText = new Text(groupSelectAutoDeploy, SWT.SINGLE | SWT.BORDER);
 		GridData gd = new GridData();
 		gd.widthHint = convertWidthInCharsToPixels(TEXT_FIELD_WIDTH);
 		autodeployText.setLayoutData(gd);
+	
 
 		// Clicking the button will allow the user
 		// to select a directory
@@ -130,6 +136,8 @@ public class TargetPropertyPage extends PropertyPage {
 				}
 			}
 		});
+		
+		
 
 		// check box for Explode Artefacts
 		checkExplodeArtifacts = new Button(groupSelectAutoDeploy, SWT.CHECK);
@@ -144,22 +152,31 @@ public class TargetPropertyPage extends PropertyPage {
 		checkWildFlySupport.setSelection(false);
 		checkWildFlySupport.setText("WildFly Support");
 
+		/* Source Directory */
+		new Label(groupSelectAutoDeploy, SWT.NONE).setText(""); // dummy label
+		helpLabel = new Label(groupSelectAutoDeploy, SWT.NONE);
+		helpLabel.setText("Source directory (regex).");
+
+		// add dummy label
+		new Label(groupSelectAutoDeploy, SWT.NONE).setText("");
+
+		autodeploySourceText = new Text(groupSelectAutoDeploy, SWT.SINGLE | SWT.BORDER);
+		gd = new GridData();
+		gd.widthHint = convertWidthInCharsToPixels(TEXT_FIELD_WIDTH);
+		autodeploySourceText.setLayoutData(gd);
+
 		/*
 		 * ###############################
 		 * 
 		 * Hotdeploy Field
 		 */
-		// ownerLabel = new Label(composite, SWT.NONE);
-		// ownerLabel.setText(HOTDEPLOY_TITLE);
-
 		Group groupSelectHotDeploy = new Group(parent, SWT.NONE);
 		groupSelectHotDeploy.setText(HOTDEPLOY_TITLE);
 
 		groupSelectHotDeploy.setLayout(new GridLayout(2, false));
 
 		helpLabel = new Label(groupSelectHotDeploy, SWT.NONE);
-		helpLabel
-				.setText("Select the target hotodeploy directory from a already\ndeployed web application. ");
+		helpLabel.setText("Select the target hotodeploy directory from a already\ndeployed web application. ");
 
 		// add dummy label
 		new Label(groupSelectHotDeploy, SWT.NONE).setText("");
@@ -202,9 +219,13 @@ public class TargetPropertyPage extends PropertyPage {
 		String value = getPersistentProperty(AUTODEPLOY_DIR_PROPERTY);
 		autodeployText.setText((value != null) ? value : DEFAULT_DIR);
 
-		// Populate autodeploy text field
+		// Populate hotdeployText text field
 		value = getPersistentProperty(HOTDEPLOY_DIR_PROPERTY);
 		hotdeployText.setText((value != null) ? value : DEFAULT_DIR);
+
+		// Populate autodeploy text field
+		value = getPersistentProperty(AUTODEPLOY_SOURCE_DIR_PROPERTY);
+		autodeploySourceText.setText((value != null && !value.isEmpty()) ? value : DEFAULT_SOURCE);
 
 		// Populate checkExplodeArtifacts selection
 		String extract = getPersistentProperty(EXTRACT_ARTIFACTS_PROPERTY);
@@ -258,6 +279,7 @@ public class TargetPropertyPage extends PropertyPage {
 		// Populate the owner text field with the default value
 		autodeployText.setText(DEFAULT_DIR);
 		hotdeployText.setText(DEFAULT_DIR);
+		autodeploySourceText.setText(DEFAULT_SOURCE);
 		checkExplodeArtifacts.setSelection(false);
 		checkWildFlySupport.setSelection(false);
 	}
@@ -265,12 +287,11 @@ public class TargetPropertyPage extends PropertyPage {
 	public boolean performOk() {
 		// store the values
 
-		String target = autodeployText.getText();
+		setPersistentProperty(AUTODEPLOY_DIR_PROPERTY, autodeployText.getText().trim());
 
-		setPersistentProperty(AUTODEPLOY_DIR_PROPERTY, target.trim());
+		setPersistentProperty(HOTDEPLOY_DIR_PROPERTY, hotdeployText.getText().trim());
 
-		target = hotdeployText.getText();
-		setPersistentProperty(HOTDEPLOY_DIR_PROPERTY, target.trim());
+		setPersistentProperty(AUTODEPLOY_SOURCE_DIR_PROPERTY, autodeploySourceText.getText().trim());
 
 		// extractartefacts.
 		if (checkExplodeArtifacts.getSelection() == true) {
