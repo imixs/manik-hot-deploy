@@ -3,7 +3,7 @@
    <description name="manik-hot-deploy updatesite" url="http://www.imixs.org/manik.updatesite/site.xml">
       This Eclipse Plugin allows hot deployment of Java EE maven archetypes into an application server.
    </description>
-   <feature url="features/org.imixs.eclipse.manik_feature_1.0.5.201408051748.jar" id="org.imixs.eclipse.manik_feature" version="1.0.5.201408051748">
+   <feature url="features/org.imixs.eclipse.manik_feature_1.0.6.201909281405.jar" id="org.imixs.eclipse.manik_feature" version="1.0.6.201909281405">
       <category name="manik"/>
    </feature>
    <category-def name="manik" label="Manik Hot Deployment"/>
