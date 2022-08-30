@@ -1,7 +1,12 @@
 package org.imixs.maven.manik;
 
+import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.List;
@@ -39,22 +44,57 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 	private MavenProject project;
 
 	private WatchService watchService;
-
-	public void execute() throws MojoExecutionException, MojoFailureException {
-		// TODO Auto-generated method stub
-		System.out.println("===============> we are in the install phase..execute ");
-
 	
+	org.apache.maven.model.FileSet fileset;
+
+	@SuppressWarnings("unchecked")
+	public void execute() throws MojoExecutionException, MojoFailureException {
+		
+		getLog().info("==== Manik Hot Deployment v2.0 ====");
+		String baseDir=project.getBasedir().toString();
+		
+			
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
 		} catch (Exception e) {
 			throw new MojoExecutionException("Unable to create watch service");
 		}
-		getLog().info("Registering " + autodeployments.size() + " sources...");
+		getLog().info("..... registering " + autodeployments.size() + " deployments...");
 
 		for (AutoDeployment deployment : autodeployments) {
-			getLog().info("..... source=" + deployment.getSource());
-			getLog().info("..... target=" + deployment.getTarget());
+			String source=
+					deployment.getSource();
+			String target=deployment.getTarget();
+			
+			// relative path?
+			if (!source.startsWith("/")) {
+				source=baseDir+"/"+source;
+			}
+			if (!target.startsWith("/")) {
+				target=baseDir+"/"+target;
+			}
+					
+			getLog().info("..... source=" + source);
+			getLog().info("..... target=" + target);
+			
+			
+			// copy file
+			Path sourcePath = Paths.get(source);
+			Path targetPath=null;
+			if (target.endsWith("/")) {
+				targetPath = Paths.get(target+sourcePath.getFileName());
+			} else {
+				targetPath = Paths.get(target);
+			}
+		
+		    try {
+		    	
+		    	Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+				getLog().info("..... autodeployment successful");
+			} catch (IOException e) {
+				getLog().warn("Failed to copy target file: " + e.getMessage());
+			}
+		 
 		}
 
 	}

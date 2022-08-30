@@ -34,6 +34,12 @@ Incremental deployment means, that in the moment when you are changing a web res
 
 # Development
 
+Background:
+
+ - https://maven.apache.org/plugin-developers/index.html
+ - https://www.baeldung.com/maven-plugin
+ - https://github.com/fizzed/maven-plugins/blob/master/watcher/src/main/java/com/fizzed/maven/watcher/RunMojo.java
+
 ## Testing the Plugin
 
 	$ mvn clean install
