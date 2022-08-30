@@ -30,3 +30,15 @@ Incremental deployment means, that in the moment when you are changing a web res
 # How to use
 [See the Projekt Home for more information](https://manik.imixs.org/)
 
+
+
+# Development
+
+## Testing the Plugin
+
+	$ mvn clean install
+
+## Executing Our Plugin
+
+	$ mvn org.imixs:hotdeploy-plugin:0.0.1-SNAPSHOT:dependency-counter
+	$ mvn org.imixs:hotdeploy-plugin:0.0.1-SNAPSHOT:hotdeploy
