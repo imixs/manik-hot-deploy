@@ -1,5 +1,6 @@
 package org.imixs.maven.manik;
 
+import java.io.File;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.WatchKey;
@@ -19,7 +20,9 @@ import org.apache.maven.project.MavenProject;
 
 @Mojo(name = "hotdeploy", defaultPhase = LifecyclePhase.COMPILE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true)
 public class MojoHotdeployPlugin extends AbstractMojo {
-
+	
+	public static final String SEPARATOR = FileSystems.getDefault().getSeparator();
+	
 	/*
 	 * Note, the property variable name must be equal here!
 	 */
@@ -32,9 +35,11 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 	private WatchService watchService;
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		System.out.println("===============> ..execute ");
+		
+		int count = 0;
 
-	
+		String baseDir = project.getBasedir().toString();
+
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
 		} catch (Exception e) {
@@ -43,6 +48,30 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 		getLog().info("Registering " + hotdeployments.size() + " sources...");
 
 		for (HotDeployment deployment : hotdeployments) {
+			String source = deployment.getSource();
+			String target = deployment.getTarget();
+			// relative path?
+			if (!source.startsWith(SEPARATOR)) {
+				source = baseDir + SEPARATOR + source;
+			}
+			if (!target.startsWith(SEPARATOR)) {
+				target = baseDir + SEPARATOR + target;
+
+				// verify if the target is a directory
+				File file = new File(target);
+				if (!file.isDirectory()) {
+					// skip....
+					getLog().warn("..... " + target
+							+ " is not a directory! Deployment will be skipped. Please check your plugin configuration.");
+					continue;
+				}
+				// test if target folder ends with /
+				if (!target.endsWith(SEPARATOR)) {
+					target = target + SEPARATOR;
+				}
+
+			}
+			
 			getLog().info("..... source=" + deployment.getSource());
 			getLog().info("..... target=" + deployment.getTarget());
 		}
