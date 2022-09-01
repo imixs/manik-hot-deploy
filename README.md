@@ -41,12 +41,12 @@ To add the Manik-Hotdeploy Plugin to your maven project you just need to add plu
 				<artifactId>manik-hotdeploy-maven-plugin</artifactId>
 				<version>2.0.0-SNAPSHOT</version>
 				<executions>
-                	<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>deploy</goal>
-						</goals>
-                	</execution>
+				  <execution>
+				    <phase>install</phase>
+				    <goals>
+				      <goal>deploy</goal>
+				    </goals>
+				  </execution>
             	</executions>
 				<configuration>
 					<!-- List Source and Target folders for Autodeploy and Hotdeploy -->
