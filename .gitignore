@@ -9,6 +9,6 @@ target/
 *~ 
 
 # ignore eclipse directories and project files
-#.settings/
-#.project
-#.classpath
+.settings/
+.project
+.classpath

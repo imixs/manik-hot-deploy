@@ -77,24 +77,14 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 			getLog().info("Starting auto deployment....");
 
 			for (AutoDeployment deployment : autodeployments) {
-				String source = deployment.getSource();
-				String target = deployment.getTarget();
-
-				// relative path?
-				if (!source.startsWith(SEPARATOR)) {
-					source = baseDir + SEPARATOR + source;
-				}
-				if (!target.startsWith(SEPARATOR)) {
-					target = baseDir + SEPARATOR + target;
-				}
-				// test if target folder ends with /
-				if (!target.endsWith(SEPARATOR)) {
-					target = target + SEPARATOR;
-				}
-				getLog().info("..... source: " + source);
-				getLog().info("..... target: " + target);
+				Path sourcePath =getSourcePath(deployment, baseDir);
+				Path targetPath =getTargetPath(deployment, baseDir);
+				getLog().info("..... source: " + sourcePath.toString());
+				getLog().info("..... target: " + targetPath.toString());
+				
+			
 				try {
-					Path sourcePath = Paths.get(source);
+					//Path sourcePath = Paths.get(source);
 					/*
 					 * Now we parse the source directory with the NIO DirectoryStream to detect all
 					 * files supporting wildcards
@@ -105,7 +95,7 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 							sourcePath.getFileName().toString());
 					for (Path path : stream) {
 						// copy single artifact
-						copyArtefact(path, Paths.get(target + SEPARATOR + path.getFileName()), deployment.isUnpack());
+						copyArtefact(path, Paths.get(targetPath.toString() + SEPARATOR + path.getFileName()), deployment.isUnpack());
 						count++;
 					}
 					stream.close();
@@ -120,6 +110,44 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 		}
 	}
 
+	
+/**
+ * Computes the source path of a deployment object
+ * @param deployment
+ * @param baseDir
+ * @return
+ */
+	public static Path getSourcePath(AbstractDeployment deployment ,String baseDir) {
+		String source = deployment.getSource();
+		// relative path?
+		if (!source.startsWith(SEPARATOR)) {
+			source = baseDir + SEPARATOR + source;
+		}
+
+		return Paths.get(source);
+	}
+	/**
+	 * Computes the target path of a deployment object
+	 * @param deployment
+	 * @param baseDir
+	 * @return
+	 */
+	public static Path getTargetPath(AbstractDeployment deployment,String baseDir) {
+		String target = deployment.getTarget();
+		// relative path?
+
+		if (!target.startsWith(SEPARATOR)) {
+			target = baseDir + SEPARATOR + target;
+		}
+		// test if target folder ends with /
+		if (!target.endsWith(SEPARATOR)) {
+			target = target + SEPARATOR;
+		}
+
+		return Paths.get(target);
+	}
+	
+	
 	/**
 	 * This method copies a single artifact. If the path is a directory, the method
 	 * prints a warning and skips the artifact.
@@ -141,11 +169,9 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 				// unzip artifact....
 				unzipArtifact(path.toString(), targetPath.toString());
 
-				getLog().info("touch: " + targetPath.toString() + "/" + path.getFileName() + ".dodeploy");
-				// Wildfly Support: create a .dodeploy file
+				// Wildfly Support: touch a .dodeploy file
 				touchFile(targetPath.getParent().toString() + "/" + path.getFileName() + ".dodeploy");
 			}
-
 		}
 	}
 

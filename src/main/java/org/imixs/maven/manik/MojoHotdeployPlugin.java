@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -68,7 +69,7 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 
 	private WatchService watcher;
 
-	private Map<WatchKey, Path> watchKeyMap;
+	private Map<WatchKey, HotDeployment> watchKeyMap;
 
 	@SuppressWarnings("unchecked")
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -85,38 +86,23 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 		}
 
 		if (hotdeployments.size() > 0) {
-			getLog().info("Starting hot deployment....");
-
 			for (HotDeployment deployment : hotdeployments) {
-				String source = deployment.getSource();
-				String target = deployment.getTarget();
-
-				// relative path?
-				if (!source.startsWith(SEPARATOR)) {
-					source = baseDir + SEPARATOR + source;
-				}
-				if (!target.startsWith(SEPARATOR)) {
-					target = baseDir + SEPARATOR + target;
-				}
-				// test if target folder ends with /
-				if (!target.endsWith(SEPARATOR)) {
-					target = target + SEPARATOR;
-				}
-				getLog().info("..... source: " + source);
-				getLog().info("..... target: " + target);
-
-				Path sourcePath = Paths.get(source);
-				Path targetPath = Paths.get(target);
+				Path sourcePath = MojoAutodeployPlugin.getSourcePath(deployment, baseDir);
+				Path targetPath = MojoAutodeployPlugin.getTargetPath(deployment, baseDir);
+				getLog().info("..... source: " + sourcePath.toString());
+				getLog().info("..... target: " + targetPath.toString());
 				try {
-					// register watchKey for all event types
+					// register recursive watchKey for all event types in the directory
+					registerRecursive(sourcePath, deployment);
+
+					/*
+					 * Just an Example for a single watchKey:
+					 * 
+					 * WatchKey watchKey = sourcePath.register(watcher,
+					 * StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
+					 * StandardWatchEventKinds.ENTRY_MODIFY);
+					 */
 					
-					registerRecursive(sourcePath,targetPath);
-					
-//					WatchKey watchKey = sourcePath.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
-//							StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
-//					watchKeyMap.put(watchKey, targetPath);
-//					
-					getLog().info("..... watchKey registered");
 				} catch (IOException x) {
 					System.err.println(x);
 				}
@@ -124,7 +110,7 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 			}
 		}
 
-		System.out.println("===============> ..starting watcher loop....");
+		getLog().info("..... watching hot-deployments...");
 		for (;;) {
 			try {
 
@@ -137,7 +123,11 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 				}
 
 				// get the targetPath from the watchKeyMap....
-				Path targetPath = watchKeyMap.get(key);
+				HotDeployment watchKeyDeployment = watchKeyMap.get(key);
+				Path targetPath = MojoAutodeployPlugin.getTargetPath(watchKeyDeployment, baseDir);
+				Path sourcePath = MojoAutodeployPlugin.getSourcePath(watchKeyDeployment, baseDir);
+
+				// Path targetPath = watchKeyMap.get(key);
 				// process all events...
 				for (WatchEvent<?> event : key.pollEvents()) {
 					WatchEvent.Kind<?> kind = event.kind();
@@ -145,17 +135,37 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 					if (kind == StandardWatchEventKinds.OVERFLOW) {
 						continue;
 					}
-
 					
-					// The filename is the
-					// context of the event.
+					count++;
+
+					// The filename is the context of the event.
 					WatchEvent<Path> ev = (WatchEvent<Path>) event;
 					Path filename = ev.context();
 
-					System.out.println(" event: " + " kind=" + event.kind() + " file=" +  filename.toString());
-					System.out.println(" targetPath= " + targetPath.toString());
+					// from the current context and the sourcePath we can now compute the absolute
+					// target path
+					Path absoluteSourcePath = Paths
+							.get(watchKeyDeployment.getObjectPath() + SEPARATOR + filename.toString());
+					Path relativePath = sourcePath.relativize(absoluteSourcePath);
+					Path absoluteTargetPath = Paths.get(targetPath + SEPARATOR + relativePath);
 
-					// do something....
+					/*
+					 * System.out.println(" sourcePath= " + sourcePath.toString());
+					 * System.out.println(" absoluteSourcePath: " + absoluteSourcePath.toString());
+					 * System.out.println(" relativePath: " + relativePath.toString());
+					 * System.out.println(" absoluteTargetPath: " + absoluteTargetPath);
+					 */
+
+					// COPY or DELETE?
+					if (event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)
+							|| event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
+						Files.copy(absoluteSourcePath, absoluteTargetPath, StandardCopyOption.REPLACE_EXISTING);
+					}
+					if (event.kind().equals(StandardWatchEventKinds.ENTRY_DELETE)) {
+						Files.deleteIfExists(absoluteTargetPath);
+					}
+					getLog().info("...("+count + ") " + event.kind() + ": " + relativePath);
+
 				}
 				// Reset the key -- this step is critical if you want to
 				// receive further watch events. If the key is no longer valid,
@@ -165,24 +175,33 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 					break;
 				}
 
-			} catch (ClosedWatchServiceException e) {
+			} catch (ClosedWatchServiceException | IOException e) {
+				getLog().error("Failed to process Hot Deployment: " + e.getMessage());
 				break;
 			}
 		}
 	}
-	
-	
-	
-	
-	private void registerRecursive(final Path root, Path targetPath) throws IOException {
-	    // register all subfolders
-	    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-	        @Override
-	        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-	           WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
-	           watchKeyMap.put(key, targetPath);
-	            return FileVisitResult.CONTINUE;
-	        }
-	    });
+
+	/**
+	 * Helper method to register watcherKeys for all sub directories in a root
+	 * directory.
+	 * 
+	 * @param root
+	 * @param deployment
+	 * @throws IOException
+	 */
+	private void registerRecursive(final Path root, HotDeployment deployment) throws IOException {
+		// register all subfolders
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
+						StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+				HotDeployment currentDeployment = new HotDeployment(deployment.getSource(), deployment.getTarget());
+				currentDeployment.setObjectPath(dir.toString());
+				watchKeyMap.put(key, currentDeployment);
+				return FileVisitResult.CONTINUE;
+			}
+		});
 	}
 }

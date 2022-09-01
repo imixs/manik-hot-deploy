@@ -1,12 +1,69 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.imixs</groupId>
-	<artifactId>hotdeploy-plugin</artifactId>
+	<groupId>org.imixs.maven</groupId>
+	<artifactId>manik-hotdeploy-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
 	<version>2.0.0-SNAPSHOT</version>
 
+	<name>manik-maven-plugin Maven Mojo</name>
+	
+	
+	<description>
+		Manik-Hot-Deploy is a Maven Plugin which brings hot-deploy to the development of web applications. 
+		It supports Glassfish, Payara, JBoss and Wildfly application servers.
+	</description>
 
+	<url>https://github.com/imixs/manik-hot-deploy</url>
+	<organization>
+		<name>Imixs Software Solutions GmbH</name>
+		<url>http://www.imixs.com</url>
+	</organization>
+	<inceptionYear>2006</inceptionYear>
+
+	<developers>
+		<developer>
+			<id>rsoika</id>
+			<name>Ralph Soika</name>
+			<email>ralph.soika@imixs.com</email>
+			<url>http://blog.imixs.org/</url>
+			<organization>Imixs Software Solutions GmbH</organization>
+			<organizationUrl>http://www.imixs.com</organizationUrl>
+			<roles>
+				<role>developer</role>
+				<role>testing</role>
+			</roles>
+			<timezone>2</timezone>
+		</developer>
+
+	
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:imixs/manik-hot-deploy.git</connection>
+		<developerConnection>scm:git:git@github.com:imixs/manik-hot-deploy.git</developerConnection>
+		<url>https://github.com/imixs/manik-hot-deploy/</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/imixs/manik-hot-deploy/issues</url>
+	</issueManagement>
+
+	<mailingLists>
+		<!-- no mailing lists supported -->
+	</mailingLists>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License</name>
+			<url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>All the results of the imixs workflow project are subject to the GPL licensing model. </comments>
+		</license>
+	</licenses>
+	
 	<properties>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,25 +73,106 @@
 
 	</properties>
 	<build>
-		<pluginManagement>
-			<plugins></plugins>
-
-		</pluginManagement>
-
 		<plugins>
+			<!-- release management -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<useReleaseProfile>false</useReleaseProfile>
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+				</configuration>
+			</plugin>
+			<!-- release to Maven central -->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<stagingProgressTimeoutMinutes>15</stagingProgressTimeoutMinutes>
+				</configuration>
+			</plugin>
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
 				<version>3.5.2</version>
 				<configuration>
-					<!-- Or add a descriptor to the mojo class comment -->
+				    <goalPrefix>manik-hotdeploy</goalPrefix>
+        			<!-- Or add a descriptor to the mojo class comment 
 					<skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
+					-->
 				</configuration>
 			</plugin>
 
 
 		</plugins>
 	</build>
+	
+	<profiles>
+		<!-- Activate using the release property -->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<!-- To generate javadoc -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>3.2.0</version>
+						<configuration>
+							<additionalOptions>-Xdoclint:none</additionalOptions>
+						</configuration>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- To sign the artifacts -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+		
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
@@ -56,4 +194,15 @@
 		</dependency>
 	</dependencies>
 
+	<!-- Distributen Management oss.sonatype.org -->
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 </project>

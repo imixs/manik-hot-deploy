@@ -8,8 +8,8 @@ public abstract class AbstractDeployment implements java.io.Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String source;
-	private String target;
+	protected String source;
+	protected String target;
 
 	public String getSource() {
 		return source;
