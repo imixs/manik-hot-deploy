@@ -89,14 +89,28 @@ This will start a service automatically watching your `/src/main/webapp/` folder
 [See the Projekt Home for more information](https://manik.imixs.org/)
 
 
-
 # Development
 
-## Testing the Plugin
+## Joining the Project
+
+If you have any questions post them into the [issue tracker](https://github.com/imixs/imixs/manik-hot-deploy/issues).
+If you have a bug or an idea, browse the [open issues](https://github.com/imixs/manik-hot-deploy/issues) before opening a new one. You can also take a look at the [Open Source Guide](https://opensource.guide/).
+
+
+## License
+
+Imixs-Workflow is free software, because we believe that an open exchange of experiences is fundamental for the development of valuable software. All results of this project are provided under the [GNU General Public License](http://www.gnu.org/licenses/gpl-3.0.en.html). 
+
+
+## Build 
+
+If you want to build the plugin from source or develop any additional features you can build and test the plugin with maven.
+
+### Testing the Plugin
 
 	$ mvn clean install
 
-## Executing Our Plugin
+### Executing the Plugin
 
 	$ mvn manik-hotdeploy:hotdeploy
 
@@ -106,11 +120,10 @@ To run a specific version run:
 	
 
 
-Background:
+### Background:
 
 For more background how to develop a plugin read:
 
  - https://maven.apache.org/plugin-developers/index.html
  - https://www.baeldung.com/maven-plugin
- - https://github.com/fizzed/maven-plugins/blob/master/watcher/src/main/java/com/fizzed/maven/watcher/RunMojo.java
 	
