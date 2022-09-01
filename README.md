@@ -31,6 +31,7 @@ Incremental deployment means, that in the moment when you are changing a web res
 
 To add the Manik-Hotdeploy Plugin to your maven project you just need to add plugin section into your pom.xml:
 
+```xml
 	....
 	<build>
 		<plugins>
@@ -70,6 +71,9 @@ To add the Manik-Hotdeploy Plugin to your maven project you just need to add plu
 		</plugins>
 	</build>
 	....
+```
+
+
 
 In this example the Autodepolyment is configured for your application named "my app.war" into the target folder `docker/deployments/`
 This means, if you run the maven standard goal `install` on your web project, the Manik-Hotdeploy-Plugin will deploy the resulting web artifact my-app.war into your application servers autodeploy location specified in the plugin configuration.
