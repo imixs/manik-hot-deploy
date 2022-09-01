@@ -32,45 +32,45 @@ Incremental deployment means, that in the moment when you are changing a web res
 To add the Manik-Hotdeploy Plugin to your maven project you just need to add plugin section into your pom.xml:
 
 ```xml
-	....
-	<build>
-		<plugins>
-		  .....
-			<!-- Manik Hotdploy -->
-			<plugin>
-				<groupId>org.imixs.maven</groupId>
-				<artifactId>manik-hotdeploy-maven-plugin</artifactId>
-				<version>2.0.0-SNAPSHOT</version>
-				<executions>
-				  <execution>
-				    <phase>install</phase>
-				    <goals>
-				      <goal>deploy</goal>
-				    </goals>
-				  </execution>
-            	</executions>
-				<configuration>
-					<!-- List Source and Target folders for Autodeploy and Hotdeploy -->
-					<autodeployments>
-						<deployment>
-							<!-- wildcard deployment -->
-							<source>target/*.{war,ear,jar}</source>
-							<target>docker/deployments/</target>
-							<unpack>true</unpack>						
-						</deployment>
-					</autodeployments>
-					<hotdeployments>
-						<deployment>
-							<source>src/main/webapp</source>
-							<target>docker/deployments/my-app.war</target>
-						</deployment>						
-					</hotdeployments>
-				</configuration>
-			</plugin>
-			.....
-		</plugins>
-	</build>
-	....
+  ....
+  <build>
+    <plugins>
+    .....
+      <!-- Manik Hotdploy -->
+      <plugin>
+        <groupId>org.imixs.maven</groupId>
+        <artifactId>manik-hotdeploy-maven-plugin</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+        <executions>
+          <execution>
+            <phase>install</phase>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <!-- List Source and Target folders for Autodeploy and Hotdeploy -->
+          <autodeployments>
+            <deployment>
+              <!-- wildcard deployment -->
+              <source>target/*.{war,ear,jar}</source>
+              <target>docker/deployments/</target>
+              <unpack>true</unpack>						
+            </deployment>
+            </autodeployments>
+            <hotdeployments>
+              <deployment>
+                <source>src/main/webapp</source>
+                <target>docker/deployments/my-app.war</target>
+              </deployment>						
+            </hotdeployments>
+          </configuration>
+        </plugin>
+        .....
+      </plugins>
+    </build>
+    ....
 ```
 
 
