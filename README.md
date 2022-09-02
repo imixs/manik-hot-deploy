@@ -40,7 +40,7 @@ To add the Manik-Hotdeploy Plugin to your maven project you just need to add plu
       <plugin>
         <groupId>org.imixs.maven</groupId>
         <artifactId>manik-hotdeploy-maven-plugin</artifactId>
-        <version>2.0.0-SNAPSHOT</version>
+        <version>2.0.0</version>
         <executions>
           <execution>
             <phase>install</phase>
