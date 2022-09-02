@@ -93,7 +93,7 @@ This will start a service automatically watching your `/src/main/webapp/` folder
 
 ## Joining the Project
 
-If you have any questions post them into the [issue tracker](https://github.com/imixs/imixs/manik-hot-deploy/issues).
+If you have any questions post them into the [issue tracker](https://github.com/imixs/manik-hot-deploy/issues).
 If you have a bug or an idea, browse the [open issues](https://github.com/imixs/manik-hot-deploy/issues) before opening a new one. You can also take a look at the [Open Source Guide](https://opensource.guide/).
 
 
