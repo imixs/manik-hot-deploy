@@ -77,7 +77,7 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 		int count = 0;
 		this.watchKeyMap = new HashMap<>();
 
-		String baseDir = project.getBasedir().toString();
+		Path basePath = project.getBasedir().toPath();;
 
 		try {
 			watcher = FileSystems.getDefault().newWatchService();
@@ -87,8 +87,8 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 
 		if (hotdeployments.size() > 0) {
 			for (HotDeployment deployment : hotdeployments) {
-				Path sourcePath = MojoAutodeployPlugin.getSourcePath(deployment, baseDir);
-				Path targetPath = MojoAutodeployPlugin.getTargetPath(deployment, baseDir);
+				Path sourcePath = MojoAutodeployPlugin.getSourcePath(deployment, basePath);
+				Path targetPath = MojoAutodeployPlugin.getTargetPath(deployment, basePath);
 				getLog().info("..... source: " + sourcePath.toString());
 				getLog().info("..... target: " + targetPath.toString());
 				try {
@@ -124,8 +124,8 @@ public class MojoHotdeployPlugin extends AbstractMojo {
 
 				// get the targetPath from the watchKeyMap....
 				HotDeployment watchKeyDeployment = watchKeyMap.get(key);
-				Path targetPath = MojoAutodeployPlugin.getTargetPath(watchKeyDeployment, baseDir);
-				Path sourcePath = MojoAutodeployPlugin.getSourcePath(watchKeyDeployment, baseDir);
+				Path targetPath = MojoAutodeployPlugin.getTargetPath(watchKeyDeployment, basePath);
+				Path sourcePath = MojoAutodeployPlugin.getSourcePath(watchKeyDeployment, basePath);
 
 				// Path targetPath = watchKeyMap.get(key);
 				// process all events...
