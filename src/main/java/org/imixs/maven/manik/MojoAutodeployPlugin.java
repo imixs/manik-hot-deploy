@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,7 +54,6 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "deploy", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class MojoAutodeployPlugin extends AbstractMojo {
 
-	public static final String SEPARATOR = FileSystems.getDefault().getSeparator();
 	/*
 	 * Note, the property variable name must be equal here!
 	 */
@@ -71,14 +69,14 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 
 		int count = 0;
 
-		String baseDir = project.getBasedir().toString();
+		Path basePath = project.getBasedir().toPath();
 
 		if (autodeployments.size() > 0) {
 			getLog().info("Starting auto deployment....");
 
 			for (AutoDeployment deployment : autodeployments) {
-				Path sourcePath =getSourcePath(deployment, baseDir);
-				Path targetPath =getTargetPath(deployment, baseDir);
+				Path sourcePath =getSourcePath(deployment, basePath);
+				Path targetPath =getTargetPath(deployment, basePath);
 				getLog().info("..... source: " + sourcePath.toString());
 				getLog().info("..... target: " + targetPath.toString());
 				
@@ -95,7 +93,7 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 							sourcePath.getFileName().toString());
 					for (Path path : stream) {
 						// copy single artifact
-						copyArtefact(path, Paths.get(targetPath.toString() + SEPARATOR + path.getFileName()), deployment.isUnpack());
+						copyArtefact(path, targetPath.resolve(path.getFileName()), deployment.isUnpack());
 						count++;
 					}
 					stream.close();
@@ -114,37 +112,33 @@ public class MojoAutodeployPlugin extends AbstractMojo {
 /**
  * Computes the source path of a deployment object
  * @param deployment
- * @param baseDir
+ * @param basePath
  * @return
  */
-	public static Path getSourcePath(AbstractDeployment deployment ,String baseDir) {
-		String source = deployment.getSource();
+	public static Path getSourcePath(AbstractDeployment deployment ,Path basePath) {
+		Path source = Paths.get(deployment.getSource());
 		// relative path?
-		if (!source.startsWith(SEPARATOR)) {
-			source = baseDir + SEPARATOR + source;
+		if (!source.isAbsolute()) {
+			source = basePath.resolve(source);
 		}
 
-		return Paths.get(source);
+		return source;
 	}
 	/**
 	 * Computes the target path of a deployment object
 	 * @param deployment
-	 * @param baseDir
+	 * @param basePath
 	 * @return
 	 */
-	public static Path getTargetPath(AbstractDeployment deployment,String baseDir) {
-		String target = deployment.getTarget();
+	public static Path getTargetPath(AbstractDeployment deployment,Path basePath) {
+		Path target = Paths.get(deployment.getTarget());
 		// relative path?
 
-		if (!target.startsWith(SEPARATOR)) {
-			target = baseDir + SEPARATOR + target;
-		}
-		// test if target folder ends with /
-		if (!target.endsWith(SEPARATOR)) {
-			target = target + SEPARATOR;
+		if (!target.isAbsolute()) {
+			target = basePath.resolve(target);
 		}
 
-		return Paths.get(target);
+		return target;
 	}
 	
 	
